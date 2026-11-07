@@ -1035,7 +1035,14 @@ private fun IslandRootContent(
                     shape = if (bond > 0f) bondedShape(bond, compactHeightPx, expandedCornerPx) else surfaceShape
                     clip = true
                 }
-                .background(Color.Black)
+                .liquidGlass(
+                    progress = {
+                        val range = (expandedHeight[0] - minSurfaceHeight).toFloat()
+                        val raw = if (range > 0f) ((liveSurfaceHeight.intValue - minSurfaceHeight) / range) else 0f
+                        (((raw - 0.15f) / 0.6f).coerceIn(0f, 1f)) * (1f - bond)
+                    },
+                    shape = { if (bond > 0f) bondedShape(bond, compactHeightPx, expandedCornerPx) else surfaceShape },
+                )
                 .then(
                     outlineFor(1f - bond)
                         ?.let { Modifier.border(spec.outlineThickness, it, surfaceShape) }
