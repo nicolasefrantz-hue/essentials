@@ -38,10 +38,25 @@ class SmartPixelsHandler(
     private val shiftPatternRunnable =
         object : Runnable {
             override fun run() {
+                val positions = prefs.getInt(SettingsRepository.KEY_SMART_PIXELS_POSITIONS, 16).coerceIn(8, 32)
+                val random = prefs.getBoolean(SettingsRepository.KEY_SMART_PIXELS_RANDOM_SHIFT, false)
+                overlayView?.configureShifting(positions, random)
                 overlayView?.shiftPattern()
-                handler.postDelayed(this, 30 * 60 * 1000L) // Shift pattern every 30 minutes to prevent burn-in
+                scheduleNextShift()
             }
         }
+
+    private var scheduledIntervalMinutes = -1
+
+    private fun getIntervalMinutes(): Int =
+        prefs.getInt(SettingsRepository.KEY_SMART_PIXELS_INTERVAL, 10).coerceIn(5, 30)
+
+    private fun scheduleNextShift() {
+        val minutes = getIntervalMinutes()
+        scheduledIntervalMinutes = minutes
+        handler.removeCallbacks(shiftPatternRunnable)
+        handler.postDelayed(shiftPatternRunnable, minutes * 60 * 1000L)
+    }
 
     private var isScreenRecordingActive = false
     private var screenRecordingCallback: java.util.function.Consumer<Int>? = null
@@ -116,20 +131,29 @@ class SmartPixelsHandler(
         val enabled = prefs.getBoolean(SettingsRepository.KEY_SMART_PIXELS_ENABLED, false)
         val disableOnCast = prefs.getBoolean(SettingsRepository.KEY_SMART_PIXELS_DISABLE_ON_CAST, true)
         val intensity = prefs.getFloat(SettingsRepository.KEY_SMART_PIXELS_INTENSITY, 50f)
+        val positions = prefs.getInt(SettingsRepository.KEY_SMART_PIXELS_POSITIONS, 16).coerceIn(8, 32)
+        val randomShift = prefs.getBoolean(SettingsRepository.KEY_SMART_PIXELS_RANDOM_SHIFT, false)
+        val adaptiveIntensity = prefs.getBoolean(SettingsRepository.KEY_SMART_PIXELS_ADAPTIVE_INTENSITY, true)
 
         if (enabled && !(disableOnCast && isScreenCastingOrMirroring())) {
-            showOverlay(intensity)
+            showOverlay(intensity, positions, randomShift, adaptiveIntensity)
         } else {
             hideOverlay()
         }
     }
 
-    private fun showOverlay(intensity: Float) {
+    private fun showOverlay(
+        intensity: Float,
+        positions: Int,
+        randomShift: Boolean,
+        adaptiveIntensity: Boolean,
+    ) {
         if (overlayView == null) {
             overlayView = SmartPixelsOverlayView(service)
         }
 
-        overlayView?.setIntensity(intensity)
+        overlayView?.setIntensity(intensity, adaptiveIntensity)
+        overlayView?.configureShifting(positions, randomShift)
 
         if (!isOverlayAdded && windowManager != null && overlayView != null) {
             val params =
@@ -166,8 +190,7 @@ class SmartPixelsHandler(
                 }
 
                 // Schedule burn-in prevention pattern shifting
-                handler.removeCallbacks(shiftPatternRunnable)
-                handler.postDelayed(shiftPatternRunnable, 30 * 60 * 1000L)
+                scheduleNextShift()
             } catch (e: Exception) {
                 Log.e("SmartPixelsHandler", "Failed to add Smart Pixels accessibility overlay", e)
             }
@@ -175,6 +198,7 @@ class SmartPixelsHandler(
             overlayView?.visibility = View.VISIBLE
             overlayView?.alpha = 1f
             overlayView?.invalidate()
+            if (getIntervalMinutes() != scheduledIntervalMinutes) scheduleNextShift()
         }
     }
 
@@ -216,24 +240,49 @@ class SmartPixelsHandler(
         private var lastWidth = 0
         private var lastHeight = 0
         private var currentIntensity = 50f
+        private var adaptiveIntensity = true
         private var patternOffset = 0
+        private var positionCount = 16
+        private var randomShift = false
 
         init {
             setLayerType(LAYER_TYPE_HARDWARE, null)
         }
 
-        fun setIntensity(intensity: Float) {
-            if (currentIntensity != intensity) {
-                currentIntensity = intensity
-                cachedPatternBitmap?.recycle()
-                cachedPatternBitmap = null
-                invalidate()
+        fun setIntensity(intensity: Float, adaptive: Boolean) {
+            val safeIntensity = intensity.coerceIn(10f, 90f)
+            if (currentIntensity != safeIntensity || adaptiveIntensity != adaptive) {
+                currentIntensity = safeIntensity
+                adaptiveIntensity = adaptive
+                invalidatePattern()
+            }
+        }
+
+        fun configureShifting(positions: Int, random: Boolean) {
+            val safePositions = positions.coerceIn(8, 32)
+            if (positionCount != safePositions || randomShift != random) {
+                positionCount = safePositions
+                randomShift = random
+                patternOffset = 0
+                invalidatePattern()
             }
         }
 
         fun shiftPattern() {
-            patternOffset = (patternOffset + 1) % 4
-            cachedPatternBitmap?.recycle()
+            patternOffset = if (randomShift) {
+                if (positionCount <= 1) 0 else {
+                    var next = (0 until positionCount).random()
+                    while (next == patternOffset) next = (0 until positionCount).random()
+                    next
+                }
+            } else {
+                (patternOffset + 1) % positionCount
+            }
+            invalidatePattern()
+        }
+
+        private fun invalidatePattern() {
+            cachedPatternBitmap?.let { if (!it.isRecycled) it.recycle() }
             cachedPatternBitmap = null
             invalidate()
         }
@@ -248,8 +297,7 @@ class SmartPixelsHandler(
             if (w != lastWidth || h != lastHeight) {
                 lastWidth = w
                 lastHeight = h
-                cachedPatternBitmap?.recycle()
-                cachedPatternBitmap = null
+                invalidatePattern()
             }
         }
 
@@ -269,19 +317,24 @@ class SmartPixelsHandler(
             p.alpha = alphaValue
 
             val step =
-                when {
-                    currentIntensity >= 75f -> 2
-                    currentIntensity >= 50f -> 3
-                    currentIntensity >= 30f -> 4
-                    else -> 6
+                if (!adaptiveIntensity) {
+                    4
+                } else {
+                    when {
+                        currentIntensity >= 75f -> 3
+                        currentIntensity >= 50f -> 4
+                        currentIntensity >= 30f -> 5
+                        else -> 6
+                    }
                 }
 
-            val offsetX = (patternOffset % 2) * step
-            val offsetY = (patternOffset / 2) * step
+            val period = step * 2
+            val offsetX = patternOffset % period
+            val offsetY = (patternOffset / period) % period
 
-            var y = 0
+            var y = -step * 2
             while (y < h) {
-                var x = ((y / step % 2) * step + offsetX) % (step * 2)
+                var x = -step * 2 + ((y / step % 2) * step) + offsetX
                 while (x < w) {
                     canvas.drawRect(
                         x.toFloat(),

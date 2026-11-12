@@ -1989,6 +1989,12 @@
     <string name="about_desc_smart_pixels">Overlay a customizable checkered pattern of blacked-out pixels across the screen using accessibility service to save display power on OLED screens.</string>
     <string name="smart_pixels_enable_title">Enable smart pixels</string>
     <string name="smart_pixels_intensity_title">Intensity</string>
+    <string name="smart_pixels_interval_title">Pixel shift interval</string>
+    <string name="smart_pixels_positions_title">Number of shift positions</string>
+    <string name="smart_pixels_random_shift_title">Random pixel shifting</string>
+    <string name="smart_pixels_random_shift_desc">Choose a different pattern position randomly instead of following a fixed sequence</string>
+    <string name="smart_pixels_adaptive_intensity_title">Adaptive pattern density</string>
+    <string name="smart_pixels_adaptive_intensity_desc">Adjust the pattern density according to the selected intensity</string>
     <string name="smart_pixels_disable_on_cast_title">Disable during screen casting</string>
     <string name="smart_pixels_disable_on_cast_desc">Automatically pause pixel grid overlay while casting or recording screen</string>
     <string name="search_smart_pixels_enable_title">Enable smart pixels</string>

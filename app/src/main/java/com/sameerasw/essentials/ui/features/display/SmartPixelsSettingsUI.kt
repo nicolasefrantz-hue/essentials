@@ -112,6 +112,81 @@ fun SmartPixelsSettingsUI(
             )
         }
 
+
+        var intervalValue by remember(viewModel.smartPixelsInterval.floatValue) {
+            mutableStateOf(viewModel.smartPixelsInterval.floatValue)
+        }
+        RoundedCardContainer(
+            spacing = 2.dp,
+            cornerRadius = 24.dp,
+        ) {
+            ConfigSliderItem(
+                title = stringResource(R.string.smart_pixels_interval_title),
+                value = intervalValue,
+                onValueChange = { intervalValue = it },
+                onValueChangeFinished = {
+                    HapticUtil.performUIHaptic(view)
+                    viewModel.setSmartPixelsInterval(intervalValue.toInt())
+                },
+                valueRange = 5f..30f,
+                steps = 4,
+                increment = 5f,
+                valueFormatter = { "${it.toInt()} min" },
+                enabled = isSmartPixelsEnabled && isAccessibilityEnabled,
+            )
+        }
+
+        var positionsValue by remember(viewModel.smartPixelsPositions.floatValue) {
+            mutableStateOf(viewModel.smartPixelsPositions.floatValue)
+        }
+        RoundedCardContainer(
+            spacing = 2.dp,
+            cornerRadius = 24.dp,
+        ) {
+            ConfigSliderItem(
+                title = stringResource(R.string.smart_pixels_positions_title),
+                value = positionsValue,
+                onValueChange = { positionsValue = it },
+                onValueChangeFinished = {
+                    HapticUtil.performUIHaptic(view)
+                    viewModel.setSmartPixelsPositions(positionsValue.toInt())
+                },
+                valueRange = 8f..32f,
+                steps = 2,
+                increment = 8f,
+                valueFormatter = { "${it.toInt()}" },
+                enabled = isSmartPixelsEnabled && isAccessibilityEnabled,
+            )
+        }
+
+        RoundedCardContainer(
+            spacing = 2.dp,
+            cornerRadius = 24.dp,
+        ) {
+            IconToggleItem(
+                iconRes = R.drawable.rounded_sync_24,
+                title = stringResource(R.string.smart_pixels_random_shift_title),
+                description = stringResource(R.string.smart_pixels_random_shift_desc),
+                isChecked = viewModel.isSmartPixelsRandomShiftEnabled.value,
+                onCheckedChange = { checked ->
+                    HapticUtil.performUIHaptic(view)
+                    viewModel.setSmartPixelsRandomShiftEnabled(checked)
+                },
+                enabled = isSmartPixelsEnabled && isAccessibilityEnabled,
+            )
+            IconToggleItem(
+                iconRes = R.drawable.rounded_brightness_auto_24,
+                title = stringResource(R.string.smart_pixels_adaptive_intensity_title),
+                description = stringResource(R.string.smart_pixels_adaptive_intensity_desc),
+                isChecked = viewModel.isSmartPixelsAdaptiveIntensityEnabled.value,
+                onCheckedChange = { checked ->
+                    HapticUtil.performUIHaptic(view)
+                    viewModel.setSmartPixelsAdaptiveIntensityEnabled(checked)
+                },
+                enabled = isSmartPixelsEnabled && isAccessibilityEnabled,
+            )
+        }
+
         RoundedCardContainer(
             spacing = 2.dp,
             cornerRadius = 24.dp,

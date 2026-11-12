@@ -332,7 +332,11 @@ class ScreenOffAccessibilityService :
                 updatePocketModeExcludedAppsSet()
             } else if (key == SettingsRepository.KEY_SMART_PIXELS_ENABLED ||
                 key == SettingsRepository.KEY_SMART_PIXELS_INTENSITY ||
-                key == SettingsRepository.KEY_SMART_PIXELS_DISABLE_ON_CAST
+                key == SettingsRepository.KEY_SMART_PIXELS_DISABLE_ON_CAST ||
+                key == SettingsRepository.KEY_SMART_PIXELS_INTERVAL ||
+                key == SettingsRepository.KEY_SMART_PIXELS_POSITIONS ||
+                key == SettingsRepository.KEY_SMART_PIXELS_RANDOM_SHIFT ||
+                key == SettingsRepository.KEY_SMART_PIXELS_ADAPTIVE_INTENSITY
             ) {
                 smartPixelsHandler.updateState()
             } else if (key == SettingsRepository.KEY_AOD_WALLPAPER_ENABLED ||

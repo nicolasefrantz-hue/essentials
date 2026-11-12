@@ -168,6 +168,10 @@ class MainViewModel : ViewModel() {
     val isSmartPixelsEnabled = mutableStateOf(false)
     val smartPixelsIntensity = mutableFloatStateOf(50f)
     val isSmartPixelsDisableOnCastEnabled = mutableStateOf(true)
+    val smartPixelsInterval = mutableFloatStateOf(10f)
+    val smartPixelsPositions = mutableFloatStateOf(16f)
+    val isSmartPixelsRandomShiftEnabled = mutableStateOf(false)
+    val isSmartPixelsAdaptiveIntensityEnabled = mutableStateOf(true)
 
     val isDuoEnabled = mutableStateOf(false)
     val isDuoIslandCombined = mutableStateOf(false)
@@ -812,6 +816,21 @@ class MainViewModel : ViewModel() {
 
                     SettingsRepository.KEY_SMART_PIXELS_DISABLE_ON_CAST ->
                         isSmartPixelsDisableOnCastEnabled.value =
+                            settingsRepository.getBoolean(key, true)
+                    SettingsRepository.KEY_SMART_PIXELS_INTERVAL ->
+                        smartPixelsInterval.floatValue =
+                            settingsRepository.getInt(key, 10).toFloat()
+
+                    SettingsRepository.KEY_SMART_PIXELS_POSITIONS ->
+                        smartPixelsPositions.floatValue =
+                            settingsRepository.getInt(key, 16).toFloat()
+
+                    SettingsRepository.KEY_SMART_PIXELS_RANDOM_SHIFT ->
+                        isSmartPixelsRandomShiftEnabled.value =
+                            settingsRepository.getBoolean(key, false)
+
+                    SettingsRepository.KEY_SMART_PIXELS_ADAPTIVE_INTENSITY ->
+                        isSmartPixelsAdaptiveIntensityEnabled.value =
                             settingsRepository.getBoolean(key, true)
 
                     SettingsRepository.KEY_DUO_ENABLED ->
@@ -2492,6 +2511,14 @@ class MainViewModel : ViewModel() {
             settingsRepository.getFloat(SettingsRepository.KEY_SMART_PIXELS_INTENSITY, 50f)
         isSmartPixelsDisableOnCastEnabled.value =
             settingsRepository.getBoolean(SettingsRepository.KEY_SMART_PIXELS_DISABLE_ON_CAST, true)
+        smartPixelsInterval.floatValue =
+            settingsRepository.getInt(SettingsRepository.KEY_SMART_PIXELS_INTERVAL, 10).toFloat()
+        smartPixelsPositions.floatValue =
+            settingsRepository.getInt(SettingsRepository.KEY_SMART_PIXELS_POSITIONS, 16).toFloat()
+        isSmartPixelsRandomShiftEnabled.value =
+            settingsRepository.getBoolean(SettingsRepository.KEY_SMART_PIXELS_RANDOM_SHIFT, false)
+        isSmartPixelsAdaptiveIntensityEnabled.value =
+            settingsRepository.getBoolean(SettingsRepository.KEY_SMART_PIXELS_ADAPTIVE_INTENSITY, true)
         isDuoEnabled.value = settingsRepository.isDuoEnabled()
         isDuoAutoDetect.value = settingsRepository.isDuoAutoDetectEnabled()
         duoCameraOffsetX.floatValue = settingsRepository.getDuoCameraOffsetX()
@@ -5502,6 +5529,28 @@ class MainViewModel : ViewModel() {
     ) {
         isSmartPixelsDisableOnCastEnabled.value = enabled
         settingsRepository.putBoolean(SettingsRepository.KEY_SMART_PIXELS_DISABLE_ON_CAST, enabled)
+    }
+
+    fun setSmartPixelsInterval(minutes: Int) {
+        val value = minutes.coerceIn(5, 30)
+        smartPixelsInterval.floatValue = value.toFloat()
+        settingsRepository.putInt(SettingsRepository.KEY_SMART_PIXELS_INTERVAL, value)
+    }
+
+    fun setSmartPixelsPositions(positions: Int) {
+        val value = positions.coerceIn(8, 32)
+        smartPixelsPositions.floatValue = value.toFloat()
+        settingsRepository.putInt(SettingsRepository.KEY_SMART_PIXELS_POSITIONS, value)
+    }
+
+    fun setSmartPixelsRandomShiftEnabled(enabled: Boolean) {
+        isSmartPixelsRandomShiftEnabled.value = enabled
+        settingsRepository.putBoolean(SettingsRepository.KEY_SMART_PIXELS_RANDOM_SHIFT, enabled)
+    }
+
+    fun setSmartPixelsAdaptiveIntensityEnabled(enabled: Boolean) {
+        isSmartPixelsAdaptiveIntensityEnabled.value = enabled
+        settingsRepository.putBoolean(SettingsRepository.KEY_SMART_PIXELS_ADAPTIVE_INTENSITY, enabled)
     }
 
     fun setDuoEnabled(enabled: Boolean) {

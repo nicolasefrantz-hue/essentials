@@ -204,6 +204,10 @@ class SettingsRepository(
         const val KEY_SMART_PIXELS_ENABLED = "smart_pixels_enabled"
         const val KEY_SMART_PIXELS_INTENSITY = "smart_pixels_intensity"
         const val KEY_SMART_PIXELS_DISABLE_ON_CAST = "smart_pixels_disable_on_cast"
+        const val KEY_SMART_PIXELS_INTERVAL = "smart_pixels_interval_minutes"
+        const val KEY_SMART_PIXELS_POSITIONS = "smart_pixels_positions"
+        const val KEY_SMART_PIXELS_RANDOM_SHIFT = "smart_pixels_random_shift"
+        const val KEY_SMART_PIXELS_ADAPTIVE_INTENSITY = "smart_pixels_adaptive_intensity"
         const val KEY_DAILY_WALLPAPER_LAST_ID = "daily_wallpaper_last_id"
 
         const val KEY_DAILY_WALLPAPER_LAST_URL_MOBILE = "daily_wallpaper_last_url_mobile"
